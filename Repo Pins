@@ -1,0 +1,45 @@
+#!/bin/bash
+# Power DNS Authoritive, Recursor, and Load Balancer Pinning
+#
+# Create the file '/etc/apt/sources.list.d/pdns.list' 
+
+#variables
+SOURCELIST=/etc/apt/sources.list.d/pdns.list
+ser="sudo apt-get install pdns-server pdns-backend-mysql"
+rec="sudo apt-get install pdns-recursor"
+dns="sudo apt-get install dnsdist"
+
+touch $SOURCELIST
+
+echo deb [arch=amd64] http://repo.powerdns.com/ubuntu focal-auth-master main >> $SOURCELIST
+echo deb [arch=amd64] http://repo.powerdns.com/ubuntu focal-rec-master main >> $SOURCELIST
+echo deb [arch=amd64] http://repo.powerdns.com/ubuntu focal-dnsdist-master main >> $SOURCELIST
+
+# And this to '/etc/apt/preferences.d/pdns'
+
+cat <<EOF | sudo tee -a /etc/apt/preferences.d/pdns
+Package: pdns-*
+Pin: origin repo.powerdns.com
+Pin-Priority: 600
+
+Package: dnsdist*
+Pin: origin repo.powerdns.com
+Pin-Priority: 600
+
+EOF
+
+# and execute the following commands
+
+curl https://repo.powerdns.com/CBC8B383-pub.asc | sudo apt-key add - &&
+sudo apt-get update
+
+
+# Select Install
+echo -e "Would you like to install (y or n)? "
+read install
+if install="n" then
+echo "See you later!"
+if install="y" then 
+echo -e "Which Product (server,recursor,dnsdist)? "
+read product {
+if product="server" then echo $ser , if product="recursor" then echo $rec , if product="dnsdist" then echo $dns }
